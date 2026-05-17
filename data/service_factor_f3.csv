@@ -1,0 +1,5 @@
+starts_band,name_cn,f3_unidirectional,f3_alternating
+le_5,1-5 次/小时,0.5,0.7
+6_to_30,6-30 次/小时,0.65,0.95
+31_to_100,31-100 次/小时,0.7,1.1
+gt_100,>100 次/小时,0.85,1.25

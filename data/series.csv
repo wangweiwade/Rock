@@ -1,0 +1,6 @@
+series,description_cn,description_en,stages,size_min,size_max,axis_type
+RKH1,直交轴1级(锥-斜齿),Bevel-Helical 1-stage,1,3,12,right_angle
+RKH2,直交轴2级(锥-斜齿),Bevel-Helical 2-stage,2,3,18,right_angle
+RKH3,直交轴3级(锥-斜齿),Bevel-Helical 3-stage,3,5,18,right_angle
+RKB2,平行轴2级(斜齿),Parallel-shaft 2-stage,2,4,18,parallel
+RKB3,平行轴3级(斜齿),Parallel-shaft 3-stage,3,4,18,parallel
