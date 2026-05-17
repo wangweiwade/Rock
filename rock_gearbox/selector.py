@@ -100,9 +100,11 @@ def _check_one_cooling(
     )
 
 
-def _build_type_code(g: CatalogEntry, output_shaft: str, mounting: str) -> str:
-    """RKB3 + S + H + 12 + 56 → 'RKB3SH 12-56'。"""
-    return f"{g.series_code}{output_shaft}{mounting} {g.size}-{int(g.ratio_nominal) if g.ratio_nominal == int(g.ratio_nominal) else g.ratio_nominal}"
+def _build_type_code(g: CatalogEntry, output_shaft: str, mounting: str, layout: str) -> str:
+    """RKB3 + S + H + 12 + 56 + C → 'RKB3SH 12-56 / C'。"""
+    ratio_str = (str(int(g.ratio_nominal)) if g.ratio_nominal == int(g.ratio_nominal)
+                 else f"{g.ratio_nominal}")
+    return f"{g.series_code}{output_shaft}{mounting} {g.size}-{ratio_str} / {layout}"
 
 
 def select_gearbox(inp: SelectionInput) -> SelectionResult:
@@ -177,7 +179,7 @@ def select_gearbox(inp: SelectionInput) -> SelectionResult:
 
         # 构建结果
         gearbox = g.to_gearbox(dims=get_dimensions(g.series_code, g.size))
-        type_code = _build_type_code(g, inp.output_shaft, inp.mounting)
+        type_code = _build_type_code(g, inp.output_shaft, inp.mounting, inp.layout)
 
         notes: list[str] = []
         if not cooling_options:

@@ -12,6 +12,7 @@ from rock_gearbox import (
     NoSuitableGearboxError,
     select_gearbox,
 )
+from rock_gearbox.models import LAYOUT_OPTIONS
 from rock_gearbox.service_factor import list_applications
 from rock_gearbox.drawing import render_drawing
 from rock_gearbox.report import generate_report
@@ -91,7 +92,7 @@ with st.expander("② 负载与服务系数", expanded=True):
     )
 
 with st.expander("③ 结构 / Structure", expanded=True):
-    c1, c2, c3, c4 = st.columns(4)
+    c1, c2, c3 = st.columns(3)
     family = c1.selectbox(
         "系列家族", ["RKB", "RKH", "auto"],
         format_func=lambda x: {"RKB": "RKB 直交轴(伞齿轮)",
@@ -105,9 +106,22 @@ with st.expander("③ 结构 / Structure", expanded=True):
     )
     mounting = c3.selectbox(
         "安装方位", ["H", "M"],
-        format_func=lambda x: {"H": "H 卧式", "M": "M 立式"}[x],
+        format_func=lambda x: {"H": "H 卧式带地脚", "M": "M 卧式无地脚"}[x],
     )
-    lubrication = c4.selectbox(
+
+    # 布局形式依赖于输出轴(对照 Rock.pdf 第 51 页)
+    layout_options = LAYOUT_OPTIONS[output_shaft]
+    layout_default_idx = layout_options.index("C") if "C" in layout_options else 0
+    c1, c2 = st.columns(2)
+    layout = c1.selectbox(
+        f"布局形式(输出轴朝向,见手册第 51 页)— {output_shaft} 类有 {len(layout_options)} 种",
+        layout_options,
+        index=layout_default_idx,
+        help="🔍 实心轴 S 可选 A/B/C/D 四种;空心轴 H 与带锁紧盘空心轴 D 各仅 A/B 两种。"
+             "完整图示见 Rock.pdf 第 51 页《布局形式》。"
+             "字母代表输出轴端面朝向:A/B 通常指左右,C/D 指上下。",
+    )
+    lubrication = c2.selectbox(
         "润滑方式(f₈)", ["oil_bath", "forced"],
         format_func=lambda x: {"oil_bath": "浸油 (1.0)", "forced": "强制 (1.05)"}[x],
     )
@@ -146,7 +160,7 @@ if run:
             hours_per_day=hours_per_day, starts_per_hour=int(starts_per_hour),
             load_direction=load_direction,
             prime_mover=prime_mover,
-            family=family, output_shaft=output_shaft, mounting=mounting,
+            family=family, output_shaft=output_shaft, mounting=mounting, layout=layout,
             lubrication=lubrication,
             ambient_temp_c=int(ambient_temp_c), cooling_pref=cooling_pref,
         )

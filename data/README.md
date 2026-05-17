@@ -27,12 +27,18 @@
 - RKB 系列:所有公称速比 5 ~ 90,所有机座号 4 ~ 18
 - 缺失格(在 PDF 中标 `-` 或留空的型号)未录入
 
-### `thermal_power.csv` — 仅录入测试关键子集
-为节省工作量,**只录入了 RKB 系列 i_N ∈ {31.5, 40, 56} × 机座号 4~18 的热功率**。
-其余型号选型时会因热功率数据缺失而无法通过校核。
+### `thermal_power.csv` — 当前覆盖情况
+- **RKB 系列**:96.9% 覆盖(346/357 个组合,涵盖 i_N 5 ~ 90 几乎全部)
+- **RKH 系列**:17.6% 覆盖(81/460 个组合,主要是 i_N 1.25 ~ 5.6)
 
-**TODO(用户后续完善):** 补全 RKH 系列所有热功率;补全 RKB 系列其他速比。
-建议参照 `scripts/extract_catalog.py` 中 `RKB_PG` dict 的格式继续追加。
+完整覆盖清单与缺失明细见 **`data/COVERAGE.md`**(由 `scripts/extract_catalog.py` 自动生成)。
+
+**补全方法**:编辑 `scripts/parse_thermal_power.py` 顶部的 `MANUAL_PG` 字典,
+新增形如 `("RKB", 56.0, 12): (108, 258, 342, 484)` 的条目(对应 PGN/PGF/PGC/PGFC)。
+数据源:Rock.pdf 第 13/15/17/19/21 页。运行 `python scripts/parse_thermal_power.py` 重新生成 CSV。
+
+**程序行为**:若选型时某型号在 `thermal_power.csv` 中没有记录,
+程序仍会基于扭矩通过该型号,但会显示"热功率数据未录入"的提示。
 
 ### `dimensions.csv` — 仅 7 行代表性数据
 用于演示外形图功能。完整尺寸需对照 PDF 第 24-47 页录入。

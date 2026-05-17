@@ -506,7 +506,8 @@ def main():
     print(f"Reading {PDF} → writing {DATA}/")
     DATA.mkdir(exist_ok=True)
     emit_ratio_torque()
-    emit_thermal_power()
+    # thermal_power.csv 现由 scripts/parse_thermal_power.py 单独维护
+    # (含 RKH 全部 + RKB 5~90 共 437 条手工录入与核对数据)
     emit_service_factor_f1()
     emit_service_factor_f2()
     emit_service_factor_f3()
@@ -515,7 +516,47 @@ def main():
     emit_service_factor_f8()
     emit_dimensions()
     emit_data_readme()
+    emit_coverage_report()
     print("Done.")
+
+
+def emit_coverage_report():
+    """生成 data/COVERAGE.md,列出有 T2N 但无热功率数据的型号清单。"""
+    rt_rows = list(csv.DictReader(open(DATA / "ratio_torque.csv", encoding="utf-8")))
+    pg_rows = list(csv.DictReader(open(DATA / "thermal_power.csv", encoding="utf-8")))
+    pg_keys = {(r["family"], int(r["size"]), float(r["ratio_nominal"])) for r in pg_rows}
+
+    missing: dict[str, list[tuple[int, float]]] = {"RKH": [], "RKB": []}
+    total: dict[str, int] = {"RKH": 0, "RKB": 0}
+    for r in rt_rows:
+        fam = r["family"]; size = int(r["size"]); ratio = float(r["ratio_nominal"])
+        total[fam] += 1
+        if (fam, size, ratio) not in pg_keys:
+            missing[fam].append((size, ratio))
+
+    md = ["# 热功率数据覆盖报告\n",
+          "自动生成,展示 `data/ratio_torque.csv` 中存在但 `data/thermal_power.csv` 中尚未录入的型号。\n"]
+    for fam in ("RKH", "RKB"):
+        covered = total[fam] - len(missing[fam])
+        md.append(f"\n## {fam} 系列")
+        md.append(f"- 共 {total[fam]} 个 (size × ratio) 组合,**已覆盖 {covered} 个 ({covered/total[fam]*100:.1f}%)**,缺 {len(missing[fam])} 个")
+        if missing[fam]:
+            # 按 ratio 分组
+            by_ratio: dict[float, list[int]] = {}
+            for sz, r0 in sorted(missing[fam]):
+                by_ratio.setdefault(r0, []).append(sz)
+            md.append("\n缺失明细(按公称速比 i_N 分组,列出缺失的机座号):")
+            for r0 in sorted(by_ratio.keys()):
+                md.append(f"- i_N = **{r0:g}** → 缺机座号 {by_ratio[r0]}")
+    md.append("\n---")
+    md.append("\n## 如何补全\n")
+    md.append("编辑 `scripts/parse_thermal_power.py` 顶部的 `MANUAL_PG` 字典,新增类似:")
+    md.append("```python\n(\"RKB\", 56.0, 12): (108, 258, 342, 484),  # PGN, PGF, PGC, PGFC\n```")
+    md.append("\n数据源:Rock.pdf 第 13/15/17/19/21 页。运行 `python scripts/parse_thermal_power.py` 重新生成 CSV。")
+
+    out = DATA / "COVERAGE.md"
+    out.write_text("\n".join(md), encoding="utf-8")
+    print(f"  wrote {out.relative_to(ROOT)}")
 
 
 if __name__ == "__main__":

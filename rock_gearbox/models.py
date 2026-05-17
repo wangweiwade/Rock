@@ -8,10 +8,25 @@ from typing import Literal
 LoadType = Literal["unidirectional", "alternating"]
 Family = Literal["RKH", "RKB", "auto"]
 OutputShaft = Literal["S", "H", "D"]
+# 安装方位 (Rock 工业齿轮箱无立式型号,只有卧式两种):
+#   H = 卧式带地脚 (有底座)
+#   M = 卧式无地脚 (法兰悬挂/电机座式)
 Mounting = Literal["H", "M"]
+# 布局形式 (输出轴朝向,见 Rock.pdf 第 51 页):
+#   实心轴 S → A/B/C/D 四种布局
+#   空心轴 H/D → A/B 两种布局
+Layout = Literal["A", "B", "C", "D"]
 Lubrication = Literal["oil_bath", "forced"]
 Cooling = Literal["GN", "GF", "GC", "GFC"]
 CoolingPref = Literal["auto", "GN", "GF", "GC", "GFC"]
+
+
+# 输出轴形式 → 可选布局
+LAYOUT_OPTIONS: dict[str, list[Layout]] = {
+    "S": ["A", "B", "C", "D"],     # 实心轴
+    "H": ["A", "B"],                # 空心轴
+    "D": ["A", "B"],                # 空心轴 + 收缩盘
+}
 
 
 @dataclass
@@ -34,7 +49,8 @@ class SelectionInput:
     # ---- 结构 ----
     family: Family = "RKB"             # 系列家族:RKH 平行轴 / RKB 直交轴 / auto 不限
     output_shaft: OutputShaft = "S"    # 输出轴:S 实心,H 空心,D 空心+收缩盘
-    mounting: Mounting = "H"           # 安装方位:H 卧式,M 立式
+    mounting: Mounting = "H"           # 安装方位:H 卧式带地脚, M 卧式无地脚
+    layout: Layout = "C"               # 布局形式,见 LAYOUT_OPTIONS
     lubrication: Lubrication = "oil_bath"
     # ---- 环境 ----
     ambient_temp_c: int = 30           # {10, 20, 30, 40, 50}
