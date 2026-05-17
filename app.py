@@ -14,7 +14,7 @@ from rock_gearbox import (
 )
 from rock_gearbox.models import LAYOUT_OPTIONS
 from rock_gearbox.service_factor import list_applications
-from rock_gearbox.drawing import render_drawing
+from rock_gearbox.drawing import render_drawing, render_dimensions_table, get_drawing_page
 from rock_gearbox.report import generate_report
 
 
@@ -107,7 +107,12 @@ with st.expander("③ 结构 / Structure", expanded=True):
     mounting = c3.selectbox(
         "安装方位", ["H", "M"],
         format_func=lambda x: {"H": "H 卧式带地脚", "M": "M 卧式无地脚"}[x],
+        help="⚠️ M 形式(卧式无地脚)仅在 size 13-18 大型号上提供;"
+             "若选型结果指向小尺寸但您选了 M,程序会提示无可用型号。",
     )
+    if mounting == "M":
+        st.info("ℹ️ 您选了 **M 形式(卧式无地脚)**,该形式仅 size 13-18 大型号提供。"
+                "若工况扭矩较小可能找不到匹配型号,届时请改选 H 形式。")
 
     # 布局形式依赖于输出轴(对照 Rock.pdf 第 51 页)
     layout_options = LAYOUT_OPTIONS[output_shaft]
@@ -258,13 +263,18 @@ if "result" in st.session_state:
             "热功率 P_GFC (kW)": res.best.p_gfc_kw,
         })
 
-    # ---- Tab 2:外形图 ----
+    # ---- Tab 2:外形图(直接截取 Rock.pdf 中的官方页) ----
     with tab_dim:
+        page_no = get_drawing_page(res.best.series_code, res.best.size)
+        if page_no:
+            st.caption(f"📖 来源:**Rock.pdf 第 {page_no} 页**(外形图)与第 {page_no + 1} 页(尺寸表)")
         png_bytes = render_drawing(res.best, res.type_code)
-        st.image(png_bytes, caption=f"{res.type_code} 外形/安装尺寸图(示意)")
-        if not res.best.dims:
-            st.info("当前型号的详细外形尺寸数据未录入,显示为占位图。"
-                    "可在 data/dimensions.csv 中补充完整尺寸后重新选型。")
+        st.image(png_bytes, caption=f"{res.type_code} 外形图")
+
+        dim_png = render_dimensions_table(res.best)
+        if dim_png:
+            with st.expander(f"📐 查看尺寸数据表(Rock.pdf 第 {page_no + 1} 页)", expanded=False):
+                st.image(dim_png, caption=f"{res.best.series_code} {res.best.size} 详细尺寸表")
 
     # ---- Tab 3:下载 ----
     with tab_dl:

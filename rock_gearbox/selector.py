@@ -17,6 +17,7 @@ from .catalog import (
     get_dimensions,
     nearest_standard_ratio,
 )
+from .drawing import mounting_available
 from .models import (
     CoolingResult,
     Gearbox,
@@ -149,8 +150,14 @@ def select_gearbox(inp: SelectionInput) -> SelectionResult:
 
     # ---- Step 5: 按机座号升序找首个满足扭矩 + 热功率的型号 ----
     attempted: list[str] = []
+    mounting_blocked: list[str] = []  # 因 M 形式限制被跳过的机座号
     for g in candidates:
         attempted.append(f"{g.series_code} {g.size}")
+        # M 形式(卧式无地脚)仅 size ≥ 13 才提供
+        ok, msg = mounting_available(g.series_code, g.size, inp.mounting)
+        if not ok:
+            mounting_blocked.append(f"{g.series_code} {g.size}")
+            continue
         torque_pass = g.t2n_nm >= t_required_nm
         if not torque_pass:
             continue
@@ -217,8 +224,14 @@ def select_gearbox(inp: SelectionInput) -> SelectionResult:
             notes=notes,
         )
 
+    extra = ""
+    if mounting_blocked and inp.mounting == "M":
+        extra = (
+            f"\n注意:M 形式(卧式无地脚)仅 size ≥ 13 提供,已跳过 {len(mounting_blocked)} 个小尺寸候选 "
+            f"({', '.join(mounting_blocked)})。若工况扭矩需要小尺寸,请改选 H 形式(卧式带地脚)。"
+        )
     raise NoSuitableGearboxError(
         f"在 i_N={i_n} 下,所有候选型号(共 {len(candidates)} 个)均无法通过扭矩或热功率校核。\n"
-        f"已尝试:{', '.join(attempted)}",
+        f"已尝试:{', '.join(attempted)}" + extra,
         attempted=attempted,
     )
