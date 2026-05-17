@@ -14,7 +14,8 @@ from rock_gearbox import (
 )
 from rock_gearbox.models import LAYOUT_OPTIONS
 from rock_gearbox.service_factor import list_applications
-from rock_gearbox.drawing import render_drawing, render_dimensions_table, get_drawing_page
+from rock_gearbox.catalog import DIM_DESCRIPTIONS, DIM_GROUPS, get_full_dimensions
+from rock_gearbox.drawing import render_drawing, get_drawing_page
 from rock_gearbox.report import generate_report
 
 
@@ -203,7 +204,9 @@ if "result" in st.session_state:
             for n in res.notes:
                 st.warning(f"⚠️ {n}")
 
-    tab_calc, tab_dim, tab_dl = st.tabs(["📐 计算过程", "📏 外形/安装图", "📥 下载计算书"])
+    tab_calc, tab_drawing, tab_dim, tab_dl = st.tabs([
+        "📐 计算过程", "📏 外形图", "📋 尺寸表", "📥 下载计算书",
+    ])
 
     # ---- Tab 1:计算过程 ----
     with tab_calc:
@@ -264,17 +267,52 @@ if "result" in st.session_state:
         })
 
     # ---- Tab 2:外形图(直接截取 Rock.pdf 中的官方页) ----
-    with tab_dim:
+    with tab_drawing:
         page_no = get_drawing_page(res.best.series_code, res.best.size)
         if page_no:
-            st.caption(f"📖 来源:**Rock.pdf 第 {page_no} 页**(外形图)与第 {page_no + 1} 页(尺寸表)")
+            st.caption(f"📖 来源:**Rock.pdf 第 {page_no} 页**(官方外形图)")
         png_bytes = render_drawing(res.best, res.type_code)
         st.image(png_bytes, caption=f"{res.type_code} 外形图")
+        st.info("📋 该型号的具体字母→数值清单见**「尺寸表」Tab**(从 PDF 结构化提取,不是图片)。")
 
-        dim_png = render_dimensions_table(res.best)
-        if dim_png:
-            with st.expander(f"📐 查看尺寸数据表(Rock.pdf 第 {page_no + 1} 页)", expanded=False):
-                st.image(dim_png, caption=f"{res.best.series_code} {res.best.size} 详细尺寸表")
+    # ---- Tab 3:尺寸表(按字母→数值结构化展示) ----
+    with tab_dim:
+        dims = get_full_dimensions(res.best.series_code, res.best.size)
+        if not dims:
+            st.warning(f"该型号 {res.best.series_code} 机座号 {res.best.size} 暂无字母维度数据。"
+                       "可在 `scripts/parse_dimensions.py` 中扩展支持。")
+        else:
+            st.caption(f"📋 **{res.type_code}** 完整尺寸清单(单位:mm,由 PDF 第 "
+                       f"{get_drawing_page(res.best.series_code, res.best.size) + 1} 页自动结构化提取)")
+
+            # 按分组展示
+            for group_name, letters in DIM_GROUPS.items():
+                group_rows = []
+                for letter in letters:
+                    if letter in dims:
+                        group_rows.append({
+                            "字母 (Letter)": letter,
+                            "数值 / Value": dims[letter],
+                            "说明 / Description": DIM_DESCRIPTIONS.get(letter, ""),
+                        })
+                if group_rows:
+                    st.markdown(f"#### {group_name}")
+                    st.dataframe(group_rows, hide_index=True, use_container_width=True)
+
+            # 显示未分类的字母(防数据漏失)
+            shown = {l for group in DIM_GROUPS.values() for l in group}
+            extra = sorted(set(dims.keys()) - shown)
+            if extra:
+                st.markdown("#### 其他字母")
+                st.dataframe(
+                    [{"字母": k, "数值": dims[k]} for k in extra],
+                    hide_index=True, use_container_width=True,
+                )
+
+            with st.expander("🖼 同时显示 PDF 原版尺寸表(对照参考)", expanded=False):
+                from rock_gearbox.drawing import _render_page
+                dim_page_no = get_drawing_page(res.best.series_code, res.best.size) + 1
+                st.image(_render_page(dim_page_no - 1), caption=f"Rock.pdf 第 {dim_page_no} 页")
 
     # ---- Tab 3:下载 ----
     with tab_dl:
