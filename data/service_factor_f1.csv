@@ -1,0 +1,32 @@
+application_key,name_cn,f1_le_0_5h,f1_le_10h,f1_gt_10h
+conveyor_belt_le150kw,皮带输送机 ≤150 kW,1.0,1.3,1.4
+conveyor_belt_ge150kw,皮带输送机 ≥150 kW,1.1,1.3,1.5
+conveyor_bucket,斗式输送机,,1.5,1.6
+conveyor_screw_pump,螺杆泵,,1.4,1.5
+conveyor_apron,刮板式输送机,,1.3,1.6
+escalator,自动扶梯,1.0,1.2,1.4
+elevator_freight,货用电梯,,1.2,1.5
+elevator_passenger,客用电梯,,1.5,1.8
+hoist_lifting,提升机构,1.0,1.2,1.5
+hoist_travelling,行走机构,1.1,1.6,2.0
+hoist_slewing,回转机构,1.0,1.4,1.8
+pump_centrifugal,离心泵,1.1,1.3,1.4
+pump_single_plunger,单柱塞泵,1.3,1.4,1.8
+pump_multi_plunger,多柱塞泵,1.2,1.4,1.5
+fan_axial_centrifugal,风机(轴流和离心式),,1.4,1.5
+cooling_tower_fan,冷却塔风扇,,,2.0
+mixer_uniform,搅拌机 密度均匀介质,1.0,1.3,1.5
+mixer_nonuniform,搅拌机 不均匀介质,1.2,1.5,1.7
+centrifuge,离心机,1.0,1.2,1.3
+crusher,破碎机,,1.2,1.4
+rotary_kiln,回转窑,,,2.0
+ball_mill,管式磨机,,,2.0
+roller_press,辊压机,,,2.0
+extruder,挤出机,,,1.6
+rubber_calender,橡胶压延机,,1.5,1.5
+paper_machine,造纸机械 各种类型,,1.8,2.0
+rolling_mill_slab,可逆式板坯轧机,,2.5,2.5
+bucket_wheel_excavator,斗轮式挖掘机 用于粗料,,2.2,2.2
+aerator,曝气机,,1.8,2.0
+flocculation_equipment,絮凝设备,0.8,1.0,1.3
+custom,自定义,,,
